@@ -1,0 +1,34 @@
+# 1. База данных SQLite
+shared_data/database.db
+shared_data/*.db-wal
+shared_data/*.db-shm
+
+# 2. Датасеты и файлы данных
+shared_data/**/*.csv
+shared_data/**/*.parquet
+
+# 3. Исключения (сохраняем структуру директорий)
+!shared_data/**/.gitkeep
+
+# 4. Локальные логи сервисов
+shared_data/*.log
+*.log
+
+# 5. Среда выполнения Python и кэш
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+ml_env/
+
+# 6. Конфигурации и переменные окружения
+.env
+.env.local
+
+# 7. Мусор операционных систем и IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
