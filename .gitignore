@@ -5,6 +5,7 @@ shared_data/*.db-shm
 
 # 2. Датасеты и файлы данных
 shared_data/**/*.csv
+shared_data/**/*.json
 shared_data/**/*.parquet
 
 # 3. Исключения (сохраняем структуру директорий)
