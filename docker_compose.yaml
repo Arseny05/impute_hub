@@ -1,0 +1,36 @@
+services:
+  storage_service:
+    build:
+      context: ./storage_service
+      dockerfile: Dockerfile
+    container_name: storage_service
+    restart: unless-stopped
+    ports:
+      - "${STORAGE_PORT}:${STORAGE_PORT}"
+    volumes: 
+      - ${STORAGE_DIR}:/shared_data
+    environment:
+      - STORAGE_PATH=/shared_data
+      - DB_PATH=/shared_data/database.db
+      - FLASK_DEBUG=${FLASK_DEBUG}
+    networks:
+      - ml_pipeline_net
+  collector_service:
+    build:
+      context: ./collector_service
+      dockerfile: Dockerfile
+    container_name: collector_service
+    restart: unless-stopped
+    ports:
+      - "${COLLECTOR_PORT}:8501"
+    environment:
+      - STORAGE_URL=http://storage_service:${STORAGE_PORT}
+    depends_on:
+      - storage_service
+    networks:
+      - ml_pipeline_net
+    
+networks:
+  ml_pipeline_net:
+    driver: bridge
+      
