@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 import io
 import json
+import time
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
@@ -45,12 +46,13 @@ if source_type == 'URL':
             st.error(str(e))
 else:
     uploaded_file = st.file_uploader("Choose CSV-file...", type=['csv'])
-    if uploaded_file:
+    if uploaded_file is not None and st.session_state.get('last_file') != uploaded_file.name:
         try:
             df = pd.read_csv(uploaded_file)
             st.session_state['df_raw'] = df
             st.session_state["df_current"] = df.copy()
             st.session_state["is_corrupted"] = False
+            st.session_state['last_file'] = uploaded_file.name
             st.success(f"Succesfully loaded {len(df)} strings, {df.shape[1]} tables")
         except Exception as e:
             st.error(str(e))
@@ -100,6 +102,7 @@ if st.session_state['df_current'] is not None:
                 st.session_state["missing_rate"] = rate
                 st.session_state["corrupted_columns"] = cols_corrupt
                 st.success(f"Made {percent}% missings to table!")
+                time.sleep(2)
                 st.rerun()
         with col_btn2:
             if st.button('Return raw dataset'):
@@ -108,6 +111,7 @@ if st.session_state['df_current'] is not None:
                 st.session_state["missing_rate"] = 0.0
                 st.session_state["corrupted_columns"] = []
                 st.success('Table returned into raw state')
+                time.sleep(2)
                 st.rerun()
 st.divider()
 st.header('4. Register into dataset storage')
