@@ -40,6 +40,7 @@ class DatasetManager:
         self.db_path = db_path
         self.table_name = table_name
         self.conn = sqlite3.connect(database=db_path)
+        self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.row_factory = sqlite3.Row
         self.cursor = self.conn.cursor()
 
@@ -49,13 +50,41 @@ class DatasetManager:
     def __exit__(self, exc_type, exc_value, exc_tb):
         if exc_type:
             self.conn.rollback()
+        else:
+            self.conn.commit()
         self.conn.close()
 
     def __getitem__(self, id):
-        res = self.cursor.execute(f'SELECT * FROM {self.table_name} WHERE dataset_id = ?', (id,)).fetchone()
+        if isinstance(id, int):
+            res = self.cursor.execute(f'SELECT * FROM {self.table_name} WHERE dataset_id = ?', (id,)).fetchone()
+            if not res:
+                raise KeyError(f'Dataset with {id} not found!')
+            return dict(res)
+        elif isinstance(id, str):
+            res = self.cursor.execute(f"SELECT * FROM {self.table_name} WHERE original_name = ? AND table_class = 'o' AND missing_rate = 0", (id,)).fetchone()
+            if not res:
+                raise KeyError(f'Dataset with name {id} not found!')
+            return dict(res)
+        elif isinstance(id, tuple):
+            res = self.cursor.execute(f'SELECT * FROM {self.table_name} WHERE original_name = ? AND table_class = ? AND ABS(missing_rate - ?) < 0.001', id).fetchone()
+            if not res:
+                raise KeyError(f'Dataset with name {id} not found!')
+            return dict(res)
+
+    def __delitem__(self, id):
+        res = False
+        if isinstance(id, int):
+            res = self.delete_by_id(id)
+        elif isinstance(id, str):
+            res = self.delete_by_data(id)
+        elif isinstance(id, tuple):
+            res = self.delete_by_data(*id)
+        else:
+            raise TypeError(f"Invalid key type: {type(id)}")
         if not res:
-            raise KeyError(f'Dataset with {id} not found!')
-        return dict(res) 
+            raise KeyError(f"Dataset with key {id} not found!")
+        return res
+
 
     def add(self, row:DatasetRow):
         script = f'''INSERT INTO {self.table_name}
@@ -102,12 +131,44 @@ class DatasetManager:
             row.target_only_missing,
             row.dataset_status,
             row.imputation_method
-        )).fetchone()['dataset_id']
-        return self[id]
+        )).fetchone()
+        if id:
+            return self[id['dataset_id']]
+        else:
+            return False
 
     def __len__(self):
         script = f'SELECT COUNT(*) FROM {self.table_name}'
         return self.conn.execute(script).fetchone()[0]
+
+    def delete_by_id(self, id:int):
+        try:
+            path_data = self[id]['file_path']
+        except KeyError:
+            return False
+        path_json = os.path.splitext(path_data)[0] + '.json' if path_data else None
+        self.cursor.execute(f'DELETE FROM {self.table_name} WHERE dataset_id = ?', (id,))
+        self.conn.commit()
+        if path_data and os.path.exists(path_data):
+            try:
+                os.remove(path_data)
+            except OSError:
+                pass
+        if path_json and os.path.exists(path_json):
+                    try:
+                        os.remove(path_json)
+                    except OSError:
+                        pass
+        return True
+
+    def delete_by_data(self,name, status='o', fraction=0.0):
+        id = self.cursor.execute(f'SELECT dataset_id FROM {self.table_name} WHERE original_name = ? AND ABS(missing_rate - ?) < 0.001 AND table_class = ?', (name, fraction, status)).fetchone()
+        if not id:
+            return False
+        else:
+            return self.delete_by_id(id['dataset_id'])
+
+
 
 @dataclass
 class MetricsRow:
@@ -199,6 +260,7 @@ class StorageService:
             case 'd': subdir = 'dirty'
         file_uuid = uuid.uuid4().hex
         base_path = os.path.join(self.storage_path, subdir)
+        os.makedirs(name=base_path, exist_ok=True)
         json_path = os.path.join(base_path, f'{file_uuid}.json')
         csv_path = os.path.join(base_path, f'{file_uuid}.csv')
         data.save(csv_path)

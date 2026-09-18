@@ -92,6 +92,50 @@ def get_dataset(dataset_id:int):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route("/api/storage/dataset", methods=['GET'])
+def get_dataset():
+    dataset_id = request.args.get('dataset_id', type=int)
+    name = request.args.get('name', type=str)
+    status = request.args.get('status', default='o', type=str)
+    fraction = request.args.get('fraction', default=0.0, type=float)
+    try:
+        with DatasetManager(db_path=DB_PATH) as dm:
+            if dataset_id is not None:
+                data = dm[dataset_id]
+            elif name is not None:
+                data = dm[(name, status, fraction)]
+            else:
+                return jsonify({'error':'Missing necessary argument (dataset id or dataset name)'}), 400
+        return jsonify({'status':'success', 'data':data}), 200
+    except KeyError as e:
+        return jsonify(({'error': str(e)})), 404
+    except Exception as e:
+        return jsonify({'error':f'Internal server error {str(e)}'}), 500
+
+@app.route('api/storage/dataset', method=['DELETE'])
+def delete_dataset():
+    dataset_id = request.args.get('id', type=int)
+    name = request.args.get('name', type=str)
+    status = request.args.get('status', default='o', type=str)
+    fraction = request.args.get('fraction', default=0.0, type=float)
+    try:
+        with DatasetManager(db_path=DB_PATH) as dm:
+            if dataset_id is not None:
+                del dm[dataset_id]
+                target = f'ID {dataset_id}'
+            elif name is not None:
+                del dm(name, status, fraction)
+                target = f'name={name}, table_class={status}, missing_rate={fraction}'
+            else:
+                return jsonify({'error':'Missing necessary argument (dataset id or dataset name)'}), 400
+        return jsonify({'status':'success','data': f'Dataset with {target} has been deleted with its metrics'}), 200
+    except KeyError as e:
+        return jsonify(({'error': str(e)})), 404
+    except Exception as e:
+        return jsonify({'error':f'Internal server error {str(e)}'}), 500
+
+
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=PORT, debug=DEBUG)
 
