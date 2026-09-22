@@ -1,8 +1,9 @@
 import os
 import pandas as pd
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from DataManager import DatasetManager, StorageService, MetricsManager, MetricsRow
 from dotenv import load_dotenv
+import pickle
 
 app = Flask(__name__)
 
@@ -81,16 +82,6 @@ def save_metrics():
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 
-@app.route("/api/storage/datasets/<int:dataset_id>", methods=["GET"])
-def get_dataset(dataset_id:int):
-    try:
-        with DatasetManager(db_path=DB_PATH) as dm:
-            record = dm[dataset_id]
-            return jsonify(record), 200
-    except KeyError:
-        return jsonify({'error':f"Dataset with ID {dataset_id} does not exist"}), 404
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @app.route("/api/storage/dataset", methods=['GET'])
 def get_dataset():
@@ -98,6 +89,8 @@ def get_dataset():
     name = request.args.get('name', type=str)
     status = request.args.get('status', default='o', type=str)
     fraction = request.args.get('fraction', default=0.0, type=float)
+    as_file = request.args.get('as_file', default=True)
+    as_file = str(as_file).lower() in ('true', '1')
     try:
         with DatasetManager(db_path=DB_PATH) as dm:
             if dataset_id is not None:
@@ -106,15 +99,27 @@ def get_dataset():
                 data = dm[(name, status, fraction)]
             else:
                 return jsonify({'error':'Missing necessary argument (dataset id or dataset name)'}), 400
-        return jsonify({'status':'success', 'data':data}), 200
+        if as_file:
+            file_path = data.get('file_path')
+            if not file_path or not os.path.exists(file_path):
+                return jsonify({'error':'No appropriate file in storage'}), 404
+            df = pd.read_csv(file_path)
+            res = {
+                'metadata':data,
+                'data': df
+            }
+            pickled_data = pickle.dumps(res)
+            return Response(pickled_data, mimetype='application/octet-stream')
+        else:
+            return jsonify({'status':'success', 'data':data}), 200
     except KeyError as e:
         return jsonify(({'error': str(e)})), 404
     except Exception as e:
         return jsonify({'error':f'Internal server error {str(e)}'}), 500
 
-@app.route('api/storage/dataset', method=['DELETE'])
+@app.route('/api/storage/dataset', methods=['DELETE'])
 def delete_dataset():
-    dataset_id = request.args.get('id', type=int)
+    dataset_id = request.args.get('dataset_id', type=int)
     name = request.args.get('name', type=str)
     status = request.args.get('status', default='o', type=str)
     fraction = request.args.get('fraction', default=0.0, type=float)
@@ -124,7 +129,7 @@ def delete_dataset():
                 del dm[dataset_id]
                 target = f'ID {dataset_id}'
             elif name is not None:
-                del dm(name, status, fraction)
+                del dm.delete_by_data(name, status, fraction)
                 target = f'name={name}, table_class={status}, missing_rate={fraction}'
             else:
                 return jsonify({'error':'Missing necessary argument (dataset id or dataset name)'}), 400
