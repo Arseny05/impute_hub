@@ -139,16 +139,18 @@ class Arim:
         mu_vals = []
         for item in rule.lhs:
             col, _ = item.split('=', 1)
-            if col not in full_cols:
-                return -1.0
-            mu = row_fuzzy.get(item, 0.0)
-            if mu == 0.0:
-                return -1.0
-            mu_vals.append(mu)
+            if col in full_cols:
+                mu = row_fuzzy.get(item, 0.0)
+                if mu == 0.0:
+                    return -1.0
+                mu_vals.append(mu)
+
         if not mu_vals:
             return -1.0
-        t_norm_lhs = np.prod(mu_vals)
-        return (t_norm_lhs**2) * rule.confidence * np.log(1 + len(rule.lhs))
+        t_norm = np.prod(mu_vals)
+        fraction = len(mu_vals)/len(rule.lhs)
+
+        return (t_norm * fraction)**2 * rule.confidence * np.log(1 + len(rule.lhs))
 
     def decode_term_value(self, term_str):
         col, label = term_str.split('=', 1)
