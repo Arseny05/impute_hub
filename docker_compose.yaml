@@ -13,8 +13,10 @@ services:
       - STORAGE_PATH=/shared_data
       - DB_PATH=/shared_data/database.db
       - FLASK_DEBUG=${FLASK_DEBUG}
+      - STORAGE_PORT=${STORAGE_PORT}
     networks:
       - ml_pipeline_net
+
   collector_service:
     build:
       context: ./collector_service
@@ -29,7 +31,23 @@ services:
       - storage_service
     networks:
       - ml_pipeline_net
-    
+
+  impute_service:
+    build:
+      context: ./impute_service
+      dockerfile: Dockerfile
+    container_name: impute_service
+    restart: unless-stopped
+    ports:
+      - "${IMPUTE_PORT}:8501"
+    environment:
+      - STORAGE_URL=http://storage_service:${STORAGE_PORT}
+      - ML_URL=http://ml_service:${ML_PORT}
+    depends_on:
+      - storage_service
+    networks:
+      - ml_pipeline_net
+
 networks:
   ml_pipeline_net:
     driver: bridge
