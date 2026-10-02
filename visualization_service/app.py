@@ -99,7 +99,7 @@ def plot_kde_comparison(x_grid, kde_orig, kde_imp, feature_name):
         mode='lines',
         name='Imputted',
         line=dict(color="#e75b03", width=2.5, dash='dash'),
-        fill='tozeroy'
+        fill='tozeroy',
         fillcolor="rgba(255, 127, 14, 0.15)"
     ))
 
