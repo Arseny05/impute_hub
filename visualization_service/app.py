@@ -141,4 +141,107 @@ def export_figure_to_html(fig):
 
 st.set_page_config(page_title="Visualization Service", page_icon="📈", layout="wide")
 
-pass
+st.sidebar.title('Панель управления')
+is_healthy = check_gateway_health()
+if is_healthy:
+    st.sidebar.success('Web master is online!')
+else:
+    st.sidebar.error('Web master is offline!')
+
+catalog = fetch_datasets_catalog()
+
+if not catalog:
+    st.title("📈 Visualization and data analysis service")
+    st.info("No available datasets!")
+    st.stop()
+
+tab_bench, tab_distrib, tab_matrix = st.tabs([
+    "🏆 Models benchmarks",
+    "🔬 Dencity estimation",
+    "🧩 Missings patterns"
+])
+
+with tab_bench:
+    st.header("Effectiveness imputation algorithm comparison")
+    df_benchmark = build_benchmarks_summary(catalog)
+    if not df_benchmark.empty:
+        st.dataframe(df_benchmark, use_container_width=True, hide_index=True)
+        available_metrics = [c for c in df_benchmark.columns if c not in ["dataset_id", "dataset_name", "algorithm"]]
+
+        if available_metrics:
+            chosen_metric = st.selectbox("Choose metrics for diagramm:", available_metrics)
+            fig_bar = plot_models_benchmark(df_benchmark, chosen_metric)
+            st.plotly_chart(fig_bar, use_container_width=True)
+
+            st.download_button(
+                label=f"📥 Download ({chosen_metric}) in HTML",
+                data=export_figure_to_html(fig_bar),
+                file_name=f"benchmark_{chosen_metric}.html",
+                mime="text/html"
+            )
+
+    else:
+        st.warning("No available metrics!")
+
+with tab_distrib:
+    st.header("Estimation of dencity difference")
+    orig_options = [f"{d['id']} | {d['name']}" for d in catalog if d.get("type") == "o"]
+    imp_options = [f"{d['id']} | {d['name']}" for d in catalog if d.get("type") == "i"]
+
+    col1, col2 = st.columns(2)
+    with col1:
+        sel_orig = st.selectbox("Original dataset", orig_options if orig_options else ['No data'])
+    with col2:
+        sel_imp = st.selectbox("Imputted dataset", imp_options if imp_options else ["No data"])
+
+    if (sel_orig != 'No data') and (sel_imp != 'No data'):
+        id_o = int(sel_orig.split(" | ")[0])
+        id_i = int(sel_imp.split(" | ")[0])
+        df_o = fetch_dataset_dataframe(id_o)
+        df_i = fetch_dataset_dataframe(id_i)
+        if df_o is not None and df_i is not None:
+            common_num_cols = list(df_o.select_dtypes(include=[np.number]).columns.intersection(
+                df_i.select_dtypes(include=[np.number]).columns
+            ))
+
+            if common_num_cols:
+                feat = st.selectbox("Choose feature", common_num_cols)
+                x_grid, kde_orig, kde_imp = calculate_kde_curves(df_o[feat], df_i[feat])
+
+                if x_grid is not None:
+                    fig_kde = plot_kde_comparison(x_grid, kde_orig, kde_imp, feat)
+                    st.plotly_chart(fig_kde, use_container_width=True)
+
+                    st.download_button(
+                        label=f"📥 Download KDE-plot ({feat}) in HTML",
+                        data=export_figure_to_html(fig_kde),
+                        file_name=f"kde_{feat}.html",
+                        mime="text/html"
+                    )
+
+                else:
+                    st.warning('Choosen feature has zero variation!')
+
+            else:
+                st.info('No common numerical columns!')
+
+with tab_matrix:
+    st.header('Missings heatmap')
+    sel_matrix_dataset = st.selectbox(
+        "Choose dataset for missings analysis:",
+        [f"{d['id']} | {d['name']}" for d in catalog]
+    )
+    if sel_matrix_dataset:
+        d_id = int(sel_matrix_dataset.split(" | ")[0])
+        df_mat = fetch_dataset_dataframe(d_id)
+        if df_mat:
+            total_cells = df_mat.size
+            null_cells = int(df_mat.isnull().sum().sum())
+            null_pct = (null_cells / total_cells) * 100 if total_cells > 0 else 0
+            c1, c2 = st.columns(2)
+            c1.metric("Total missings", f"{null_cells} cells")
+            c2.metric("Fraction of missings", f"{null_pct:.2f}%")
+            fig_mat = plot_missing_heatmap(df_mat)
+            st.plotly_chart(fig_mat, use_container_width=True)
+
+
