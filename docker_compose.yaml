@@ -48,6 +48,22 @@ services:
     networks:
       - ml_pipeline_net
 
+  visualization_service:
+    build:
+      context: ./visualization_service
+      dockerfile: Dockerfile
+    container_name: visualization_service
+    restart: unless-stopped
+    ports:
+      - "${VISUALIZATION_PORT:-5005}:8501"
+    environment:
+      - WEB_MASTER_URL=http://web_master:${WEB_MASTER_PORT:-8000}
+      - STORAGE_URL=http://storage_service:${STORAGE_PORT:-5001}
+    depends_on:
+      - storage_service
+    networks:
+      - ml_pipeline_net
+
 networks:
   ml_pipeline_net:
     driver: bridge

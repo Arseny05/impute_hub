@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 
 load_dotenv()
-API_GATEWAY_URL = os.getenv('WEB_MASTER_PORT', os.getenv('STORAGE_URL', 'http://localhost:5001'))
+API_GATEWAY_URL = os.getenv('WEB_MASTER_URL', os.getenv('STORAGE_URL', 'http://localhost:5001'))
 
 def check_gateway_health():
     try:
@@ -32,7 +32,7 @@ def fetch_datasets_catalog():
 
 def fetch_dataset_dataframe(dataset_id):
     try:
-        resp = requests.get(f'{API_GATEWAY_URL}/api/storage/dataset/dataset_id', timeout=10)
+        resp = requests.get(f'{API_GATEWAY_URL}/api/storage/dataset/{dataset_id}', timeout=10)
         if resp.status_code == 200:
             return pd.read_json(io.StringIO(resp.text), orient='split')
         return None
@@ -234,7 +234,7 @@ with tab_matrix:
     if sel_matrix_dataset:
         d_id = int(sel_matrix_dataset.split(" | ")[0])
         df_mat = fetch_dataset_dataframe(d_id)
-        if df_mat:
+        if df_mat is not None and not df_mat.empty:
             total_cells = df_mat.size
             null_cells = int(df_mat.isnull().sum().sum())
             null_pct = (null_cells / total_cells) * 100 if total_cells > 0 else 0
