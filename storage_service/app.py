@@ -129,7 +129,7 @@ def delete_dataset():
                 del dm[dataset_id]
                 target = f'ID {dataset_id}'
             elif name is not None:
-                del dm.delete_by_data(name, status, fraction)
+                dm.delete_by_data(name, status, fraction)
                 target = f'name={name}, table_class={status}, missing_rate={fraction}'
             else:
                 return jsonify({'error':'Missing necessary argument (dataset id or dataset name)'}), 400
