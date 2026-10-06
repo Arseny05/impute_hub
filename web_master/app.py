@@ -51,11 +51,12 @@ def dashboard():
 
 @app.route("/api/<service_name>/<path:endpoint>", methods=['GET', 'POST', 'PUT', 'DELETE'])
 def proxy_api(service_name, endpoint):
-
     if service_name not in SERVICES:
         return {"error": "Service not found"}, 404
 
-    target_url = f"{SERVICES[service_name]}/api/{service_name}/{endpoint}"
+    # target_url формируется напрямую к эндпоинту сервиса:
+    target_url = f"{SERVICES[service_name]}/{endpoint}"
+    
     try:
         resp = requests.request(
             method=request.method,
@@ -66,10 +67,11 @@ def proxy_api(service_name, endpoint):
             allow_redirects=False,
             timeout=10
         )
-
-        return Response(resp.content,
-                        resp.status_code,
-                        {key: value for key, value in resp.headers.items() if key.lower() not in ['content-encoding', 'transfer-encoding']})
+        return Response(
+            resp.content,
+            resp.status_code,
+            {key: value for key, value in resp.headers.items() if key.lower() not in ['content-encoding', 'transfer-encoding']}
+        )
     except requests.exceptions.RequestException as e:
         return {"error": f"Gateway timeout or connection error: {str(e)}"}, 502
 
