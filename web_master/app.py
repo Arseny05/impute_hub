@@ -54,14 +54,14 @@ def proxy_api(service_name, endpoint):
     if service_name not in SERVICES:
         return {"error": "Service not found"}, 404
 
-    # target_url сохраняет исходный путь /api/<service_name>/<endpoint>
+    
     target_url = f"{SERVICES[service_name]}/api/{service_name}/{endpoint}"
     
     try:
         resp = requests.request(
             method=request.method,
             url=target_url,
-            params=request.args,  # Передаем query-параметры (?id=... и т.д.)
+            params=request.args,  
             headers={key: value for (key, value) in request.headers if key != 'Host'},
             data=request.get_data(),
             cookies=request.cookies,
