@@ -26,7 +26,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decoration_function
 
-@app.route("/login", methods=['POST', 'PUSH'])
+@app.route("/login", methods=['POST', 'GET'])
 def login():
     error = None
     if request.method == "POST":
