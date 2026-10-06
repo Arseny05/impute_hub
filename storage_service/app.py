@@ -91,31 +91,51 @@ def get_dataset():
     fraction = request.args.get('fraction', default=0.0, type=float)
     as_file = request.args.get('as_file', default=True)
     as_file = str(as_file).lower() in ('true', '1')
+
     try:
         with DatasetManager(db_path=DB_PATH) as dm:
+            if dataset_id is None and name is None:
+                if hasattr(dm, 'get_all'):
+                    catalog = dm.get_all()
+                elif hasattr(dm, 'list_datasets'):
+                    catalog = dm.list_datasets()
+                else:
+                    
+                    import sqlite3
+                    with sqlite3.connect(DB_PATH) as conn:
+                        df_cat = pd.read_sql_query("SELECT * FROM datasets", conn)
+                        catalog = df_cat.to_dict(orient="records")
+                return jsonify({'datasets': catalog}), 200
+
             if dataset_id is not None:
                 data = dm[dataset_id]
             elif name is not None:
                 data = dm[(name, status, fraction)]
-            else:
-                return jsonify({'error':'Missing necessary argument (dataset id or dataset name)'}), 400
+
         if as_file:
             file_path = data.get('file_path')
             if not file_path or not os.path.exists(file_path):
                 return jsonify({'error':'No appropriate file in storage'}), 404
+            
+            accept_header = request.headers.get('Accept', '')
+            if 'application/json' in accept_header or request.args.get('format') == 'json':
+                df = pd.read_csv(file_path)
+                return Response(df.to_json(orient='split'), mimetype='application/json')
+
             df = pd.read_csv(file_path)
             res = {
-                'metadata':data,
+                'metadata': data,
                 'data': df
             }
             pickled_data = pickle.dumps(res)
             return Response(pickled_data, mimetype='application/octet-stream')
         else:
             return jsonify({'status':'success', 'data':data}), 200
+
     except KeyError as e:
-        return jsonify(({'error': str(e)})), 404
+        return jsonify({'error': str(e)}), 404
     except Exception as e:
-        return jsonify({'error':f'Internal server error {str(e)}'}), 500
+        return jsonify({'error': f'Internal server error {str(e)}'}), 500
 
 @app.route('/api/storage/dataset', methods=['DELETE'])
 def delete_dataset():

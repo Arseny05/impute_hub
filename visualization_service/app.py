@@ -32,13 +32,18 @@ def fetch_datasets_catalog():
 
 def fetch_dataset_dataframe(dataset_id):
     try:
-        resp = requests.get(f'{API_GATEWAY_URL}/api/storage/dataset/{dataset_id}', timeout=10)
+        headers = {'Accept': 'application/json'}
+        resp = requests.get(
+            f'{API_GATEWAY_URL}/api/storage/dataset',
+            params={'dataset_id': dataset_id, 'format': 'json'},
+            headers=headers,
+            timeout=10
+        )
         if resp.status_code == 200:
             return pd.read_json(io.StringIO(resp.text), orient='split')
         return None
-
     except Exception as e:
-        st.sidebar.error(f'Unable to get dataset with id {dataset_id}')
+        st.sidebar.error(f'Unable to get dataset with id {dataset_id}: {e}')
         return None
 
 def fetch_imputation_metrics(dataset_id):
