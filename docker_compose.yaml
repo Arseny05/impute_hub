@@ -64,6 +64,26 @@ services:
     networks:
       - ml_pipeline_net
 
+  web_master:
+    build:
+      context: ./web_master
+      dockerfile: Dockerfile
+    container_name: web_master
+    restart: unless-stopped
+    ports:
+      - "${WEB_MASTER_PORT:-8000}:8000"
+    environment:
+      - SECRET_KEY=super-secret-production-key
+      - PORTAL_PASSWORD=admin420
+      - STORAGE_URL=http://storage_service:5001
+      - COLLECTOR_URL=http://localhost:${COLLECTOR_PORT:-5002}
+      - IMPUTE_URL=http://localhost:${IMPUTE_PORT:-5004}
+      - VISUALIZATION_URL=http://localhost:${VISUALIZATION_PORT:-5005}
+    depends_on:
+      - storage_service
+    networks:
+      - ml_pipeline_net
+
 networks:
   ml_pipeline_net:
     driver: bridge

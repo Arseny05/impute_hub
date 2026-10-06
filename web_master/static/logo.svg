@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Серый фон подложки -->
+    <linearGradient id="grayBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3a3d40" />
+      <stop offset="100%" stop-color="#242628" />
+    </linearGradient>
+
+    <!-- Градиент планеты: глубокий темно-зеленый с мягким переливом -->
+    <radialGradient id="planetGrad" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#235c40" />
+      <stop offset="50%" stop-color="#143b29" />
+      <stop offset="85%" stop-color="#0d261a" />
+      <stop offset="100%" stop-color="#071710" />
+    </radialGradient>
+
+    <!-- Атмосферная тёмно-оранжевая дуга на планете -->
+    <linearGradient id="planetOrangeShade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b84d0c" stop-opacity="0.8" />
+      <stop offset="60%" stop-color="#7a3005" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#3d1601" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Градиент для ЕДИНСТВЕННОГО непрерывного кольца -->
+    <linearGradient id="singleRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a8430a" />
+      <stop offset="40%" stop-color="#c95714" />
+      <stop offset="70%" stop-color="#8a3405" />
+      <stop offset="90%" stop-color="#1b4d36" />
+      <stop offset="100%" stop-color="#0f3021" />
+    </linearGradient>
+
+    <!-- Тень от кольца на поверхность планеты -->
+    <filter id="shadowFilter" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Скругленная серая подложка иконки -->
+  <rect width="512" height="512" rx="100" fill="url(#grayBg)" />
+
+  <g transform="translate(0, -10)">
+    <!-- 1. ЗАДНЯЯ ЧАСТЬ КОЛЬЦА (проходит за планетой) -->
+    <!-- Единое широкое сплошное кольцо, наклоненное под углом -25 градусов -->
+    <g transform="rotate(-25 256 210)">
+      <!-- Верхняя дуга кольца, скрывающаяся за планетой -->
+      <path d="M 66 210 A 190 48 0 0 1 446 210 L 420 210 A 164 36 0 0 0 92 210 Z" 
+            fill="url(#singleRingGrad)" 
+            opacity="0.9" />
+    </g>
+
+    <!-- 2. САМА ПЛАНЕТА -->
+    <!-- Базовая сфера -->
+    <circle cx="256" cy="210" r="105" fill="url(#planetGrad)" filter="url(#shadowFilter)"/>
+    
+    <!-- Тёмно-оранжевые текстурные пояса планеты -->
+    <path d="M 155 210 Q 256 240 357 210 Q 256 265 155 210 Z" fill="url(#planetOrangeShade)" />
+    <path d="M 170 178 Q 256 200 342 178 Q 256 218 170 178 Z" fill="#662705" opacity="0.35" />
+
+    <!-- 3. ПЕРЕДНЯЯ ЧАСТЬ КОЛЬЦА (непрерывно продолжается поверх планеты) -->
+    <g transform="rotate(-25 256 210)">
+      <!-- Нижняя дуга кольца: стыкуется точно в точках (66, 210) и (446, 210) с внутренней границей (92, 210) и (420, 210) -->
+      <path d="M 66 210 A 190 48 0 0 0 446 210 L 420 210 A 164 36 0 0 1 92 210 Z" 
+            fill="url(#singleRingGrad)" 
+            filter="url(#shadowFilter)" />
+    </g>
+  </g>
+
+  <!-- 4. НАДПИСЬ ТЕМНО-СИНИМИ БУКВАМИ: IMPUTE HUB -->
+  <g transform="translate(256, 435)">
+    <text text-anchor="middle" 
+          font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" 
+          font-size="46" 
+          font-weight="900" 
+          letter-spacing="3"
+          fill="#0f224a">
+      IMPUTE HUB
+    </text>
+  </g>
+</svg>
