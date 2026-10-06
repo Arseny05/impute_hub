@@ -30,7 +30,6 @@ timeout /t 4 /nobreak > nul
 
 echo [*] Opening browser interface...
 start http://localhost:8000
-start http://localhost:8501
 
 echo ===================================================
 echo       Imputation Hub is running!             
