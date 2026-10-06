@@ -197,15 +197,21 @@ def get_dataset(param:dict):
 
 def upload_imputed_dataset(df_imputed, original_meta, model_name):
     endpoint = f"{STORAGE_URL}/api/storage/upload"
-    orig_name = original_meta.get("original_name", "dataset") if original_meta else "dataset"
+    orig_name = original_meta.get("original_name") or original_meta.get("dataset_name") or "dataset"
     fraction = original_meta.get("fraction", 0.0) if original_meta else 0.0
+    
     csv_buffer = io.BytesIO()
     df_imputed.to_csv(csv_buffer, index=False)
     csv_buffer.seek(0)
+    
     config_dict = {
         "original_name": orig_name,
-        "fraction": fraction,
-        "status": "i", 
+        "missing_rate": float(fraction),
+        "fraction": float(fraction),
+        "status": "i",
+        "table_class": "i",
+        "dataset_status": "i",
+        "imputation_method": model_name,
         "imputer": model_name
     }
     config_buffer = io.BytesIO(json.dumps(config_dict).encode("utf-8"))   
