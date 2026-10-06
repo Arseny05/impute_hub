@@ -54,7 +54,6 @@ def proxy_api(service_name, endpoint):
     if service_name not in SERVICES:
         return {"error": "Service not found"}, 404
 
-    # target_url формируется напрямую к эндпоинту сервиса:
     target_url = f"{SERVICES[service_name]}/{endpoint}"
     
     try:
