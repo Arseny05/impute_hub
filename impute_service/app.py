@@ -152,28 +152,28 @@ def plot_metrics(original, imputed, missed, num_cols, regime='macro'):
             st.download_button(label='📥 Download regression plot (PNG)', data=buf_reg.getvalue(), file_name='regression_metrics.png', mime='image/png')
             plt.close(fig_reg)
 
-        cat_cols = list(set(imputed.columns) - set(num_cols))
-        if cat_cols:
-            clf_res = evaluate_classification(original[cat_cols], imputed[cat_cols], missed[cat_cols], regime=regime)
-            if clf_res and clf_res['by_column']:
-                st.subheader("Categorial columns accuracy")
-                cols = list(clf_res['by_column'].keys())
-                acc_vals = [clf_res['by_column'][c]['accuracy'] for c in cols]
-                fig_cat, ax = plt.subplots(figsize=(9, 4.5))
-                ax.plot(cols, acc_vals, marker='o', linewidth=2, color='#C44E52', label='Accuracy')
-                ax.set_ylabel('Accuracy')
-                ax.set_ylim([0.0, 1.05])
-                ax.set_title('Accuracy by columns')
-                ax.set_xticklabels(cols, rotation=45, ha='right')
-                ax.legend()
-                ax.grid(True, linestyle='--', alpha=0.6)
-                plt.tight_layout()
-                st.pyplot(fig_cat)
+    cat_cols = list(set(imputed.columns) - set(num_cols))
+    if cat_cols:
+        clf_res = evaluate_classification(original[cat_cols], imputed[cat_cols], missed[cat_cols], regime=regime)
+        if clf_res and clf_res['by_column']:
+            st.subheader("Categorial columns accuracy")
+            cols = list(clf_res['by_column'].keys())
+            acc_vals = [clf_res['by_column'][c]['accuracy'] for c in cols]
+            fig_cat, ax = plt.subplots(figsize=(9, 4.5))
+            ax.plot(cols, acc_vals, marker='o', linewidth=2, color='#C44E52', label='Accuracy')
+            ax.set_ylabel('Accuracy')
+            ax.set_ylim([0.0, 1.05])
+            ax.set_title('Accuracy by columns')
+            ax.set_xticklabels(cols, rotation=45, ha='right')
+            ax.legend()
+            ax.grid(True, linestyle='--', alpha=0.6)
+            plt.tight_layout()
+            st.pyplot(fig_cat)
 
-                buf_cat = io.BytesIO()
-                fig_cat.savefig(buf_cat, format='png', dpi=300)
-                st.download_button(label='📥 Download accuracy plot (PNG)', data=buf_cat.getvalue(), file_name='accuracy_metrics.png', mime='image/png')
-                plt.close()
+            buf_cat = io.BytesIO()
+            fig_cat.savefig(buf_cat, format='png', dpi=300)
+            st.download_button(label='📥 Download accuracy plot (PNG)', data=buf_cat.getvalue(), file_name='accuracy_metrics.png', mime='image/png')
+            plt.close()
 
 def get_dataset(param:dict):
     param['as_file'] = True
