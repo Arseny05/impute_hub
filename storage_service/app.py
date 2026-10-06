@@ -94,7 +94,7 @@ def get_dataset():
 
     try:
         with DatasetManager(db_path=DB_PATH) as dm:
-        
+            
             if dataset_id is None and name is None:
                 if hasattr(dm, 'get_all'):
                     catalog = dm.get_all()
@@ -118,13 +118,16 @@ def get_dataset():
                         else:
                             clean_row[k] = v
 
-                    
                     d_id = clean_row.get('dataset_id') or clean_row.get('id')
                     clean_row['id'] = d_id
-                    clean_row['type'] = clean_row.get('dataset_status', clean_row.get('type', 'o'))
-                    clean_row['algorithm'] = clean_row.get('imputation_method', clean_row.get('algorithm', 'None'))
-                    if 'name' not in clean_row or not clean_row['name']:
-                        clean_row['name'] = clean_row.get('dataset_name', f"Dataset_{d_id}")
+                    
+                    
+                    clean_row['type'] = clean_row.get('table_class') or clean_row.get('type', 'o')
+                    clean_row['algorithm'] = clean_row.get('imputation_method') or 'None'
+                    
+                    
+                    orig_n = clean_row.get('original_name') or clean_row.get('dataset_name')
+                    clean_row['name'] = orig_n if orig_n else f"Dataset_{d_id}"
 
                     clean_catalog.append(clean_row)
 
@@ -141,13 +144,11 @@ def get_dataset():
             if not file_path or not os.path.exists(file_path):
                 return jsonify({'error': 'No appropriate file in storage'}), 404
             
-            
             accept_header = request.headers.get('Accept', '')
             if 'application/json' in accept_header or request.args.get('format') == 'json':
                 df = pd.read_csv(file_path)
                 return Response(df.to_json(orient='split'), mimetype='application/json')
 
-            
             df = pd.read_csv(file_path)
             res = {
                 'metadata': data,
@@ -162,6 +163,7 @@ def get_dataset():
         return jsonify({'error': str(e)}), 404
     except Exception as e:
         return jsonify({'error': f'Internal server error {str(e)}'}), 500
+    
 
 @app.route('/api/storage/dataset', methods=['DELETE'])
 def delete_dataset():

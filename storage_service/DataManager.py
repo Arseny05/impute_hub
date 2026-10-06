@@ -257,6 +257,17 @@ class StorageService:
         
         table_class = json_data.get('table_class') or json_data.get('status', 'o')
         dataset_status = json_data.get('dataset_status') or json_data.get('status', 'o')
+        table_class = json_data.get('table_class') or json_data.get('status', 'o')
+        dataset_status = json_data.get('dataset_status')
+        if not dataset_status or dataset_status not in ['n', 'c', 'm']:
+            num_count = df.select_dtypes(include=[np.number]).shape[1]
+            if num_count == len(df.columns):
+                dataset_status = 'n'
+            elif num_count == 0:
+                dataset_status = 'c'
+            else:
+                dataset_status = 'm'
+
         imputation_method = json_data.get('imputation_method') or json_data.get('imputer', None)
         missing_rate = json_data.get('missing_rate', json_data.get('fraction', 0.0))
 

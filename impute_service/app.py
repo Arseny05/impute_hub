@@ -195,26 +195,38 @@ def get_dataset(param:dict):
         st.error(f"Failed to connect to storage service: {e}")
         return None, None
 
-def upload_imputed_dataset(df_imputed, original_meta, model_name):
+def upload_imputed_dataset(df_imputed, original_meta, model_name, num_cols):
     endpoint = f"{STORAGE_URL}/api/storage/upload"
     orig_name = original_meta.get("original_name") or original_meta.get("dataset_name") or "dataset"
     fraction = original_meta.get("fraction", 0.0) if original_meta else 0.0
-    
+
+    # Определяем статус типа данных: 'n' (numerical), 'c' (categorical), 'm' (mixed)
+    if original_meta and original_meta.get("dataset_status") in ['n', 'c', 'm']:
+        ds_status = original_meta["dataset_status"]
+    else:
+        has_num = len(num_cols) > 0
+        has_cat = len(set(df_imputed.columns) - set(num_cols)) > 0
+        if has_num and has_cat:
+            ds_status = 'm'
+        elif has_num:
+            ds_status = 'n'
+        else:
+            ds_status = 'c'
+
     csv_buffer = io.BytesIO()
     df_imputed.to_csv(csv_buffer, index=False)
     csv_buffer.seek(0)
-    
+
     config_dict = {
         "original_name": orig_name,
         "missing_rate": float(fraction),
         "fraction": float(fraction),
-        "status": "i",
-        "table_class": "i",
-        "dataset_status": "i",
+        "table_class": "i",          # 'i' — imputed
+        "dataset_status": ds_status,  # 'n', 'c' или 'm'
         "imputation_method": model_name,
         "imputer": model_name
     }
-    config_buffer = io.BytesIO(json.dumps(config_dict).encode("utf-8"))   
+    config_buffer = io.BytesIO(json.dumps(config_dict).encode("utf-8"))
     files = {
         "file": (f"{orig_name}_imputed_{model_name.lower()}.csv", csv_buffer, "text/csv"),
         "config": ("config.json", config_buffer, "application/json")
@@ -222,8 +234,7 @@ def upload_imputed_dataset(df_imputed, original_meta, model_name):
     try:
         response = requests.post(endpoint, files=files, timeout=20)
         if response.status_code == 201:
-            dataset_id = response.json().get("dataset_id")
-            return dataset_id
+            return response.json().get("dataset_id")
         else:
             try:
                 err_msg = response.json().get("error", response.text)
@@ -234,6 +245,7 @@ def upload_imputed_dataset(df_imputed, original_meta, model_name):
     except requests.exceptions.RequestException as e:
         st.error(f"Unable to connect storage!: {e}")
         return None
+    
 
 def save_metrics_to_storage(dataset_id, original, imputed, missed, num_cols):
     endpoint = f"{STORAGE_URL}/api/storage/metrics"
@@ -381,10 +393,11 @@ if __name__ == '__main__':
             if st.button('Save on storage'):
                 with st.spinner("Saving imputted dataset on storage..."):
                     new_id = upload_imputed_dataset(
-                        df_imputed=st.session_state['imputed_df'],
-                        original_meta=st.session_state.get('df_metadata'),
-                    model_name=model
-                    )
+                                df_imputed=st.session_state['imputed_df'],
+                                original_meta=st.session_state.get('df_metadata'),
+                                model_name=model,
+                                num_cols=num_cols
+                            )
                 if new_id is not None:
                     st.success(f'Dataset succesfully registered with id {new_id}')
                     if st.session_state['original_df'] is not None:

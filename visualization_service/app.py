@@ -75,14 +75,22 @@ def calculate_kde_curves(series_orig, series_imp, num_points=200):
 def build_benchmarks_summary(datasets_list):
     records = []
     for item in datasets_list:
-        if item.get('type') == 'i':
+        is_imputed = item.get('type') == 'i' or item.get('table_class') == 'i'
+        if is_imputed:
             m_data = fetch_imputation_metrics(item["id"])
-            if m_data and "metrics" in m_data:
+            if m_data and isinstance(m_data, dict):
+                metrics_dict = m_data.get("metrics", m_data)
+                
+                cleaned_metrics = {
+                    k: v for k, v in metrics_dict.items() 
+                    if k not in ["dataset_id", "created_at"] and v is not None
+                }
+                
                 record = {
                     "dataset_id": item["id"],
                     "dataset_name": item.get("name", f"Dataset {item['id']}"),
-                    "algorithm": item.get("algorithm", "Undefined"),
-                    **m_data["metrics"]
+                    "algorithm": item.get("algorithm") or item.get("imputation_method", "Undefined"),
+                    **cleaned_metrics
                 }
                 records.append(record)
     return pd.DataFrame(records)
