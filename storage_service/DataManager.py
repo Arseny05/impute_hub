@@ -252,59 +252,54 @@ class StorageService:
         df = pd.read_csv(data)
         config.seek(0)
         data.seek(0)
-        original_name = data.filename
-        table_class = json_data.get('table_class')
+
+        original_name = json_data.get('original_name', getattr(data, 'filename', 'dataset.csv'))
+        
+        table_class = json_data.get('table_class') or json_data.get('status', 'o')
+        dataset_status = json_data.get('dataset_status') or json_data.get('status', 'o')
+        imputation_method = json_data.get('imputation_method') or json_data.get('imputer', None)
+        missing_rate = json_data.get('missing_rate', json_data.get('fraction', 0.0))
+
         match table_class:
             case 'o': subdir = 'original'
             case 'i': subdir = 'imputed'
-            case 'd': subdir = 'dirty'
+            case 'd' | 'c': subdir = 'dirty'
+            case _: subdir = 'other'
+
         file_uuid = uuid.uuid4().hex
         base_path = os.path.join(self.storage_path, subdir)
         os.makedirs(name=base_path, exist_ok=True)
+
         json_path = os.path.join(base_path, f'{file_uuid}.json')
         csv_path = os.path.join(base_path, f'{file_uuid}.csv')
         data.save(csv_path)
         config.save(json_path)
+
         n_rows = len(df)
         n_cols = len(df.columns)
         file_path = csv_path
-        missing_rate = json_data.get('missing_rate', 0)
-        missing_count = df.isna().sum().sum()
+        missing_count = int(df.isna().sum().sum())
         target_column = json_data.get('target_column', None)
         target_only_missing = 0
-        if target_column and (missing_count == df[target_column].isna().sum()):
+        if target_column and target_column in df.columns and (missing_count == df[target_column].isna().sum()):
             target_only_missing = 1
-        dataset_status = json_data['dataset_status']
-        imputation_method = json_data.get('imputation_method', None)
-        row = DatasetRow(original_name=original_name, 
-                         table_class=table_class, 
-                         file_path=file_path, 
-                         missing_rate=missing_rate,
-                         missing_count=missing_count, 
-                         target_only_missing=target_only_missing, 
-                         dataset_status=dataset_status,
-                         n_cols=n_cols, 
-                         n_rows=n_rows, 
-                         target_column=target_column,
-                         imputation_method=imputation_method)
+
+        row = DatasetRow(
+            original_name=original_name, 
+            table_class=table_class, 
+            file_path=file_path, 
+            missing_rate=float(missing_rate),
+            missing_count=missing_count, 
+            target_only_missing=target_only_missing, 
+            dataset_status=dataset_status,
+            n_cols=n_cols, 
+            n_rows=n_rows, 
+            target_column=target_column,
+            imputation_method=imputation_method
+        )
+
         with DatasetManager(self.db_path, table_name='datasets') as d:
             row_id = d.add(row)
+
         return row_id
-
-
-            
-
-
-
-
-
-
-
-    
-    
-
-
-
-        
-        
 
