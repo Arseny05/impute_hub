@@ -1,0 +1,9 @@
+{
+  "service": {
+    "name": "impute_service",
+    "host": "0.0.0.0",
+    "port": 8501
+  },
+  "storage_service_url": "http://storage_service:5001",
+  "supported_algorithms": ["Mode", "MissForest", "Mean"]
+}

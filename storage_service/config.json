@@ -1,0 +1,11 @@
+{
+  "service": {
+    "name": "storage_service",
+    "host": "0.0.0.0",
+    "port": 5001
+  },
+  "storage": {
+    "db_path": "/shared_data/database.db",
+    "data_dir": "/shared_data"
+  }
+}

@@ -3,18 +3,36 @@ from functools import wraps
 import requests
 from flask import Flask, render_template, request, session, redirect, url_for, Response
 from dotenv import load_dotenv
+import json
+
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+
+def load_config():
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Warning: Failed to load config.json: {e}")
+    return {}
+
+CONFIG = load_config()
 
 load_dotenv()
+
+PORT = int(os.getenv("PORT", CONFIG.get("service", {}).get("port", 8000)))
+HOST = os.getenv("HOST", CONFIG.get("service", {}).get("host", "0.0.0.0"))
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "super-secret-default-key")
 PORTAL_PASSWORD = os.getenv("PORTAL_PASSWORD", "admin420")
 
+CONFIG_SERVICES = CONFIG.get("services", {})
 SERVICES = {
-    "collector": os.getenv("COLLECTOR_URL", "http://localhost:5002"),
-    "impute": os.getenv("IMPUTE_URL", "http://localhost:5004"),
-    "visualization": os.getenv("VISUALIZATION_URL", "http://localhost:5005"),
-    "storage": os.getenv("STORAGE_URL", "http://localhost:5001"),
+    "collector": os.getenv("COLLECTOR_URL", CONFIG_SERVICES.get("collector", "http://collector_service:8501")),
+    "impute": os.getenv("IMPUTE_URL", CONFIG_SERVICES.get("impute", "http://impute_service:8501")),
+    "visualization": os.getenv("VISUALIZATION_URL", CONFIG_SERVICES.get("visualization", "http://visualization_service:8501")),
+    "storage": os.getenv("STORAGE_URL", CONFIG_SERVICES.get("storage", "http://storage_service:5001")),
 }
 
 def login_required(f):
@@ -77,4 +95,4 @@ def proxy_api(service_name, endpoint):
         return {"error": f"Gateway timeout or connection error: {str(e)}"}, 502
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("WEB_MASTER_PORT", 8000)), debug=True)
+    app.run(host=HOST, port=PORT, debug=True)

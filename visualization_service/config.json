@@ -1,0 +1,13 @@
+{
+  "service": {
+    "name": "visualization_service",
+    "host": "0.0.0.0",
+    "port": 8501
+  },
+  "gateway_url": "http://web_master:8000",
+  "storage_url": "http://storage_service:5001",
+  "analysis": {
+    "kde_points": 200,
+    "max_heatmap_rows": 500
+  }
+}

@@ -16,6 +16,19 @@ import matplotlib.pyplot as plt
 import io
 import json
 
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+
+def load_config():
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Warning: Failed to load config.json: {e}")
+    return {}
+
+CONFIG = load_config()
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 ENV_PATH = os.path.join(ROOT_DIR, ".env")
@@ -23,7 +36,7 @@ ENV_PATH = os.path.join(ROOT_DIR, ".env")
 dotenv.load_dotenv(dotenv_path=ENV_PATH)
 
 ML_URL = os.getenv("ML_URL", 'http://localhost:5003')
-STORAGE_URL = os.getenv("STORAGE_URL", "http://storage_service:5001")
+STORAGE_URL = os.getenv("STORAGE_URL", CONFIG.get("storage_service_url", "http://storage_service:5001"))
 
 def evaluate_classification(original, imputed, missed, regime='macro'):
     if regime not in ['macro', 'weighted', 'micro']:

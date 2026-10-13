@@ -4,6 +4,21 @@ from flask import Flask, jsonify, request, Response
 from DataManager import DatasetManager, StorageService, MetricsManager, MetricsRow
 from dotenv import load_dotenv
 import pickle
+import json
+
+
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+def load_config():
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Warning: Failed to load config.json: {e}")
+    return {}
+
+CONFIG = load_config()
+
 
 app = Flask(__name__)
 
@@ -13,10 +28,11 @@ ENV_PATH = os.path.join(ROOT_DIR, ".env")
 
 load_dotenv(dotenv_path=ENV_PATH)
 
-STORAGE_PATH = os.getenv("STORAGE_PATH", os.path.join(ROOT_DIR, "shared_data"))
-DB_PATH = os.getenv("DB_PATH", os.path.join(STORAGE_PATH, "database.db"))
-PORT = int(os.getenv("STORAGE_PORT", 5001))
+STORAGE_PATH = os.getenv("DB_PATH", CONFIG.get("storage", {}).get("db_path", "/shared_data/database.db"))
+DB_PATH = os.getenv("DB_PATH", CONFIG.get("storage", {}).get("db_path", "/shared_data/storage.db"))
+PORT = int(os.getenv("PORT", CONFIG.get("service", {}).get("port", 5001)))
 DEBUG = os.getenv("FLASK_DEBUG", "True").lower() in ("true", "1")
+HOST = os.getenv("HOST", CONFIG.get("service", {}).get("host", "0.0.0.0"))
 
 storage_service = StorageService(db_path=DB_PATH, storage_path=STORAGE_PATH)
 
@@ -190,7 +206,7 @@ def delete_dataset():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=PORT, debug=DEBUG)
+    app.run(host=HOST, port=PORT, debug=DEBUG)
 
 
 

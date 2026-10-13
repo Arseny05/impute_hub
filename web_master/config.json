@@ -1,0 +1,18 @@
+{
+  "service": {
+    "name": "web_master",
+    "host": "0.0.0.0",
+    "port": 8000
+  },
+  "services": {
+    "storage": "http://storage_service:5001",
+    "collector": "http://localhost:5002",
+    "impute": "http://localhost:5004",
+    "visualization": "http://localhost:5005"
+  },
+  "auth": {
+    "portal_password": "admin420",
+    "secret_key": "super-secret-production-key"
+  },
+  "github_repo": "https://github.com/Arseny05/impute_hub"
+}

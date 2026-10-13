@@ -10,8 +10,25 @@ import requests
 import pandas as pd
 import numpy as np
 
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+def load_config():
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Warning: Failed to load config.json: {e}")
+    return {}
+
+CONFIG = load_config()
+
 load_dotenv()
-API_GATEWAY_URL = os.getenv('WEB_MASTER_URL', os.getenv('STORAGE_URL', 'http://localhost:5001'))
+API_GATEWAY_URL = os.getenv(
+    'WEB_MASTER_URL', 
+    CONFIG.get('gateway_url', 'http://web_master:8000')
+)
+KDE_POINTS = CONFIG.get('analysis', {}).get('kde_points', 200)
+MAX_HEATMAP_ROWS = CONFIG.get('analysis', {}).get('max_heatmap_rows', 500)
 
 def check_gateway_health():
     try:
@@ -56,7 +73,7 @@ def fetch_imputation_metrics(dataset_id):
         return None
 
 
-def calculate_kde_curves(series_orig, series_imp, num_points=200):
+def calculate_kde_curves(series_orig, series_imp, num_points=KDE_POINTS):
     vals_orig = series_orig.dropna().values
     vals_imp = series_imp.dropna().values
     if np.var(vals_orig) < 1e-9 or np.var(vals_imp) < 1e-9:
@@ -137,7 +154,7 @@ def plot_models_benchmark(df_bench, metric_col):
     fig.update_layout(showlegend=False, xaxis_title="Algorithm", yaxis_title=metric_col.upper())
     return fig
 
-def plot_missing_heatmap(df, max_rows=500):
+def plot_missing_heatmap(df, max_rows=MAX_HEATMAP_ROWS):
     missing_sub = df.iloc[:max_rows].isnull().astype(int)
     fig = px.imshow(
         missing_sub.T,
