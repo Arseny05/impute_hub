@@ -18,6 +18,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Create Mock .env for CI
+        run: |
+          cat <<EOF > .env
+          STORAGE_PORT=5001
+          STORAGE_DIR=./shared_data
+          FLASK_DEBUG=0
+          COLLECTOR_PORT=5002
+          IMPUTE_PORT=5004
+          ML_PORT=5004
+          VISUALIZATION_PORT=5005
+          WEB_MASTER_PORT=8000
+          EOF
+
       - name: Build all microservice images
         run: |
           docker compose build --parallel
