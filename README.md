@@ -23,7 +23,18 @@
 
 ![scema](schema.png)
 
-## 3. Запуск программы
+## 3. URL сеhвисов
+
+```text
+Микросервис    Внешний URL (для браузера)  Внутренний URL (для запросов в Docker)
+Web Master     http://localhost:8000       http://web_master:8000
+Collector      http://localhost:5002       http://collector_service:8501
+Impute         http://localhost:5004       http://impute_service:8501
+Visualization  http://localhost:5005       http://visualization_service:8501
+Storage        http://localhost:5001       http://storage_service:5001
+```
+
+## 4. Запуск программы
 
 Возможны 2 способа запуска программы:
 
