@@ -28,10 +28,13 @@
 Возможны 2 способа запуска программы:
 
 1. Через терминал - при запущенном Docker Desktop выполнить следующую команду:
-> git clone https://github.com/Arseny05/impute_hub.git
+```bash
+git clone https://github.com/Arseny05/impute_hub.git
 cd impute_hub
 docker compose up -d --build
+# Проверка статуса работы контейнеров
 docker compose ps
+```
 2. Через иконку приложения - для автоматизации запуска разработан .bat - файл, позволяющий по клику на иконку на рабочем столе запускать daemon-процесс Docker Desktop, поднимать все контейнеры и автоматически переходить в браузер для работы с приложением.
 
 
