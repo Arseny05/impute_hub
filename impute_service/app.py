@@ -15,6 +15,34 @@ import sys
 import matplotlib.pyplot as plt
 import io
 import json
+import signal
+import threading
+import time
+
+
+def start_master_heartbeat_watcher(master_url="http://web_master:8000/health", timeout_limit=3):
+    def watcher():
+        time.sleep(5)
+        failed_attempts = 0
+        while True:
+            try:
+                response = requests.get(master_url, timeout=1.5)
+                if response.status_code == 200:
+                    failed_attempts = 0
+                else:
+                    failed_attempts += 1
+            except requests.RequestException:
+                failed_attempts += 1
+
+            if failed_attempts >= timeout_limit:
+                    print(f"[SHUTDOWN] web_master unreachable for {failed_attempts}s. Exiting...")
+                    os._exit(0)
+                    break
+            time.sleep(1)
+
+    thread = threading.Thread(target=watcher, daemon=True)
+    thread.start()
+
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 
@@ -303,6 +331,12 @@ def save_metrics_to_storage(dataset_id, original, imputed, missed, num_cols):
 if __name__ == '__main__':
 
     st.set_page_config(page_title="Impute Service", layout='wide')
+
+    if "heartbeat_started" not in st.session_state:
+        st.session_state["heartbeat_started"] = True
+        start_master_heartbeat_watcher(master_url="http://web_master:8000/health", timeout_limit=3)
+
+
     st.title('Missing data imputer')
     if "current_df" not in st.session_state:
         st.session_state["current_df"] = None

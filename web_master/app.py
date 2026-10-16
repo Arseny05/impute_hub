@@ -1,9 +1,11 @@
 import os
 from functools import wraps
 import requests
-from flask import Flask, render_template, request, session, redirect, url_for, Response
+from flask import Flask, render_template, request, session, redirect, url_for, Response, jsonify
 from dotenv import load_dotenv
 import json
+import signal
+import threading
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 
@@ -34,6 +36,24 @@ SERVICES = {
     "visualization": os.getenv("VISUALIZATION_URL", CONFIG_SERVICES.get("visualization", "http://visualization_service:8501")),
     "storage": os.getenv("STORAGE_URL", CONFIG_SERVICES.get("storage", "http://storage_service:5001")),
 }
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
+
+@app.route('/stop_system', methods=['POST'])
+def stop_system():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+
+    session.clear()
+
+    def shutdown():
+        os._exit(0)
+
+    threading.Timer(0.3, shutdown).start()
+    return redirect(url_for('login'))
+
 
 def login_required(f):
 
@@ -95,4 +115,4 @@ def proxy_api(service_name, endpoint):
         return {"error": f"Gateway timeout or connection error: {str(e)}"}, 502
 
 if __name__ == "__main__":
-    app.run(host=HOST, port=PORT, debug=True)
+    app.run(host=HOST, port=PORT, debug=False, threaded=True)

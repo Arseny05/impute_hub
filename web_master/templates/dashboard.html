@@ -67,5 +67,10 @@
 
         </div>
     </div>
+<form action="{{ url_for('stop_system') }}" method="POST" class="mt-4">
+    <button type="submit" class="btn btn-danger" onclick="return confirm('Do you want to leave service?');">
+        Exit
+    </button>
+</form>
 </body>
 </html>

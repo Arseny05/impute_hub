@@ -7,6 +7,33 @@ import os
 import io
 import json
 import time
+import signal
+import threading
+
+def start_master_heartbeat_watcher(master_url="http://web_master:8000/health", timeout_limit=3):
+    def watcher():
+        time.sleep(5)
+        failed_attempts = 0
+        while True:
+            try:
+                response = requests.get(master_url, timeout=1.5)
+                if response.status_code == 200:
+                    failed_attempts = 0
+                else:
+                    failed_attempts += 1
+            except requests.RequestException:
+                failed_attempts += 1
+
+            if failed_attempts >= timeout_limit:
+                    print(f"[SHUTDOWN] web_master unreachable for {failed_attempts}s. Exiting...")
+                    os._exit(0)
+                    break
+            time.sleep(1)
+
+    thread = threading.Thread(target=watcher, daemon=True)
+    thread.start()
+
+
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 def load_config():
@@ -29,6 +56,11 @@ load_dotenv(dotenv_path=ENV_PATH)
 STORAGE_URL = os.getenv("STORAGE_URL", CONFIG.get("storage_service_url", "http://storage_service:5001"))
 
 st.set_page_config(page_title="Collector Service", layout='wide')
+
+if "heartbeat_started" not in st.session_state:
+    st.session_state["heartbeat_started"] = True
+    start_master_heartbeat_watcher(master_url="http://web_master:8000/health", timeout_limit=3)
+
 st.title("Data Collector")
 
 if "corrupted_columns" not in st.session_state:
