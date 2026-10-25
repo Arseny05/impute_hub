@@ -330,7 +330,7 @@ def save_metrics_to_storage(dataset_id, original, imputed, missed, num_cols):
 
 if __name__ == '__main__':
 
-    st.set_page_config(page_title="Impute Service", layout='wide')
+    st.set_page_config(page_title="Impute Service", page_icon='🛠️', layout='wide')
 
     if "heartbeat_started" not in st.session_state:
         st.session_state["heartbeat_started"] = True

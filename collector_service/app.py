@@ -55,7 +55,7 @@ load_dotenv(dotenv_path=ENV_PATH)
 
 STORAGE_URL = os.getenv("STORAGE_URL", CONFIG.get("storage_service_url", "http://storage_service:5001"))
 
-st.set_page_config(page_title="Collector Service", layout='wide')
+st.set_page_config(page_title="Collector Service", page_icon='🗃️', layout='wide')
 
 if "heartbeat_started" not in st.session_state:
     st.session_state["heartbeat_started"] = True
