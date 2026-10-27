@@ -2,75 +2,245 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imputation Hub</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <style>
-        .service-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
-        .service-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .service-link { text-decoration: none; color: inherit; }
+        :root {
+            --bg-main: #0f172a;       /* Глубокий темно-серый фон */
+            --bg-card: #1e293b;       /* Темно-серый цвет карточки */
+            --bg-card-hover: #334155; /* Подсветка при наведении */
+            --border-card: #334155;   
+            --text-main: #f8fafc;     /* Основной светлый текст */
+            --text-muted: #94a3b8;    /* Приглушенный текст описания */
+            --accent: #38bdf8;        /* Неоновый акцент */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Навигационная панель */
+        .navbar {
+            background-color: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--border-card);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .btn-signout {
+            border: 1px solid #475569;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-signout:hover {
+            color: #fff;
+            border-color: #94a3b8;
+            background: #1e293b;
+        }
+
+        /* Основной контейнер */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+            width: 100%;
+            flex-grow: 1;
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 4px;
+        }
+
+        /* Сетка карточек 2x2 или 4 в ряд */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Карточка сервиса */
+        .service-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            height: 100%;
+        }
+
+        .service-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .service-card:hover {
+            transform: translateY(-6px);
+            background-color: var(--bg-card-hover);
+            border-color: var(--accent);
+            box-shadow: 0 16px 30px -5px rgba(0, 0, 0, 0.4), 0 0 15px rgba(56, 189, 248, 0.15);
+        }
+
+        .service-icon {
+            font-size: 3rem;
+            margin-bottom: 1.25rem;
+            line-height: 1;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.75rem;
+        }
+
+        .card-desc {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Кнопка безопасного выхода и выключения системы */
+        .footer-action {
+            margin-top: 3.5rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-danger-custom {
+            background-color: #ef4444;
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .btn-danger-custom:hover {
+            background-color: #dc2626;
+            opacity: 0.95;
+        }
     </style>
 </head>
-<body class="bg-dark">
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-5">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="{{ url_for('static', filename='logo.png') }}" width="40" height="40" class="me-2" alt="Logo">
-                Impute Hub Service
-            </a>
-            <div class="d-flex">
-                <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Sign Out</a>
-            </div>
-        </div>
+<body>
+
+    <!-- Навигация -->
+    <nav class="navbar">
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='logo.png') }}" width="36" height="36" alt="Logo" onerror="this.style.display='none'">
+            <span>Impute Hub Service</span>
+        </a>
+        <a href="{{ url_for('logout') }}" class="btn-signout">Sign Out</a>
     </nav>
 
-    <!-- Workspace Cards -->
-    <div class="container">
-        <h2 class="mb-4">Select Workspace</h2>
-        <div class="row g-4">
+    <!-- Основной блок с карточками -->
+    <div class="main-container">
+        <div class="section-header">
+            <h2>Select Workspace</h2>
+            <p>Access active microservices and pipeline workspaces</p>
+        </div>
+
+        <div class="cards-grid">
             
-            <div class="col-md-4">
-                <a href="{{ services.collector }}" target="_blank" class="service-link">
-                    <div class="card h-100 p-3 service-card border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <h1 class="display-4 mb-3">📥</h1>
-                            <h5 class="card-title">Collector Service</h5>
-                            <p class="card-text text-muted">Upload and collect raw dataset batches for processing.</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
+            <!-- 1. Collector Service -->
+            <a href="{{ services.collector }}" target="_blank" class="service-link">
+                <div class="service-card">
+                    <div class="service-icon">📥</div>
+                    <div class="card-title">Collector Service</div>
+                    <div class="card-desc">Upload and collect raw dataset batches for preprocessing and storage.</div>
+                </div>
+            </a>
 
-            <div class="col-md-4">
-                <a href="{{ services.impute }}" target="_blank" class="service-link">
-                    <div class="card h-100 p-3 service-card border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <h1 class="display-4 mb-3">🧠</h1>
-                            <h5 class="card-title">ML / Impute Service</h5>
-                            <p class="card-text text-muted">Run missing data algorithms (MissForest, Mode, Arim).</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
+            <!-- 2. ML / Impute Service -->
+            <a href="{{ services.impute }}" target="_blank" class="service-link">
+                <div class="service-card">
+                    <div class="service-icon">🧠</div>
+                    <div class="card-title">ML / Impute Service</div>
+                    <div class="card-desc">Run missing data algorithms (MissForest, Mode, SoftImpute, Arim).</div>
+                </div>
+            </a>
 
-            <div class="col-md-4">
-                <a href="{{ services.visualization }}" target="_blank" class="service-link">
-                    <div class="card h-100 p-3 service-card border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <h1 class="display-4 mb-3">📊</h1>
-                            <h5 class="card-title">Visualization Service</h5>
-                            <p class="card-text text-muted">Interactive Plotly dashboards, KDE analysis and reports.</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
+            <!-- 3. Visualization Service -->
+            <a href="{{ services.visualization }}" target="_blank" class="service-link">
+                <div class="service-card">
+                    <div class="service-icon">📊</div>
+                    <div class="card-title">Visualization Service</div>
+                    <div class="card-desc">Interactive Plotly dashboards, distributions, KDE analysis and reports.</div>
+                </div>
+            </a>
+
+            <!-- 4. Surchik AI Assistant -->
+            <a href="{{ services.assistant }}" target="_blank" class="service-link">
+                <div class="service-card">
+                    <div class="service-icon">☕</div>
+                    <div class="card-title">Surchi AI Assistant</div>
+                    <div class="card-desc">Intelligent companion for tables, snapshots & benchmarks.</div>
+                </div>
+            </a>
 
         </div>
+
+        <!-- Кнопка выключения системы -->
+        <div class="footer-action">
+            <form action="{{ url_for('stop_system') }}" method="POST">
+                <button type="submit" class="btn-danger-custom" onclick="return confirm('Do you want to stop the system and leave?');">
+                    Shut Down System
+                </button>
+            </form>
+        </div>
     </div>
-<form action="{{ url_for('stop_system') }}" method="POST" class="mt-4">
-    <button type="submit" class="btn btn-danger" onclick="return confirm('Do you want to leave service?');">
-        Exit
-    </button>
-</form>
+
 </body>
 </html>
