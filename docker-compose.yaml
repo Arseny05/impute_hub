@@ -84,7 +84,31 @@ services:
     networks:
       - ml_pipeline_net
 
+  assistant_service:
+    build:
+      context: ./assistant_service
+      dockerfile: Dockerfile
+    container_name: assistant_service
+    restart: "no"
+    ports:
+      - "8502:8502"
+    networks:
+      - ml_pipeline_net
+    volumes:
+      - ./assistant_service/models/qwen2.5-0.5b:/app/models/qwen2.5-0.5b:ro
+      - ./assistant_service/prompt.txt:/app/prompt.txt:ro
+    environment:
+      - MODEL_DIR=/app/models/qwen2.5-0.5b
+      - PROMPT_FILE=/app/prompt.txt
+      - STORAGE_SERVICE_URL=http://storage_service:5001
+      - WEB_MASTER_URL=http://web_master:8000
+    depends_on:
+      - storage_service
+      - web_master
+
 networks:
   ml_pipeline_net:
     driver: bridge
+
+
       

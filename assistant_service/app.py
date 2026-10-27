@@ -144,7 +144,7 @@ def heartbeat_worker():
             os._exit(0)
         time.sleep(2)
 
-#if "heartbeat_started" not in st.session_state:
-    #hb_thread = threading.Thread(target=heartbeat_worker, daemon=True)
-    #hb_thread.start()
-    #st.session_state.heartbeat_started = True
+if "heartbeat_started" not in st.session_state:
+    hb_thread = threading.Thread(target=heartbeat_worker, daemon=True)
+    hb_thread.start()
+    st.session_state.heartbeat_started = True
