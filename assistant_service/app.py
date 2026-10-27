@@ -44,7 +44,7 @@ MASTER_URL = os.getenv(
 )
 MAX_NEW_TOKENS = int(config.get("max_new_tokens", 120))
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def load_assistant_pipeline():
     pipe = pipeline(
         "text-generation",
@@ -60,12 +60,31 @@ pipe = load_assistant_pipeline()
 
 def fetch_storage_snapshot():
     try:
-        catalog = requests.get(f"{STORAGE_URL}/api/storage/catalog", timeout=2).json()
-        benchmarks = requests.get(f"{STORAGE_URL}/api/storage/benchmarks", timeout=2).json()
-        return {"catalog": catalog, "benchmarks": benchmarks}
-    except Exception as e:
-        return {"error": f"Storage service unavailable: {str(e)}"}
+        resp = requests.get(f"{MASTER_URL}/api/storage/dataset", timeout=5)
+        if resp.status_code != 200:
+            return {"error": f"Storage returned status {resp.status_code}"}
 
+        data = json.loads(
+            resp.text,
+            parse_constant=lambda x: None if x in ("NaN", "Infinity", "-Infinity") else x
+        )
+
+        catalog = data.get("datasets", [])
+        datasets_summary = []
+        for d in catalog:
+            datasets_summary.append({
+                "id": d.get("id") or d.get("dataset_id"),
+                "name": d.get("name") or f"Dataset_{d.get('id')}",
+                "class": d.get("table_class", "o"),
+                "algorithm": d.get("algorithm") if d.get("algorithm") is not None else "None"
+            })
+
+        return {
+            "total_datasets": len(datasets_summary),
+            "datasets": datasets_summary
+        }
+    except Exception as e:
+        return {"error": f"API Gateway parsing error: {str(e)}"}
     
 def build_system_prompt(snapshot_data):
     try:
@@ -81,7 +100,7 @@ st.caption("Ask questions about datasets, missing values, and benchmark results.
 
 INITIAL_MESSAGE = {
     "role": "assistant",
-    "content": "Hello! I am Surchi, your AI assistant for Impute Hub. I have access to real-time database snapshots and benchmark results. How can I help you today?"
+    "content": "Hello! I am Surchi ☕, your AI assistant for Impute Hub 🤗. I have access to real-time database snapshots and benchmark results. How can I help you today?"
 }
 
 

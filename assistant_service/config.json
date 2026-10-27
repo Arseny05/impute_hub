@@ -3,5 +3,5 @@
   "prompt_file": "prompt.txt",
   "storage_service_url": "http://localhost:5000",
   "web_master_url": "http://localhost:8080",
-  "max_new_tokens": 120
+  "max_new_tokens": 300
 }
