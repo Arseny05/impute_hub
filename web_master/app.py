@@ -35,6 +35,7 @@ SERVICES = {
     "impute": os.getenv("IMPUTE_URL", CONFIG_SERVICES.get("impute", "http://impute_service:8501")),
     "visualization": os.getenv("VISUALIZATION_URL", CONFIG_SERVICES.get("visualization", "http://visualization_service:8501")),
     "storage": os.getenv("STORAGE_URL", CONFIG_SERVICES.get("storage", "http://storage_service:5001")),
+    "assistant": os.getenv("ASSISTANT_URL", CONFIG_SERVICES.get("assistant", "http://localhost:8502")), 
 }
 
 @app.route('/health', methods=['GET'])
