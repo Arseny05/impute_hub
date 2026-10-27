@@ -33,3 +33,10 @@ Thumbs.db
 .vscode/
 .idea/
 2026_420_MicroService_task.pdf
+
+assistant_service/models/
+assistant_service/**/models/
+.streamlit/
+*/.streamlit/
+.cache/
+hf_cache/
