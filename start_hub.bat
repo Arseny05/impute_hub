@@ -29,6 +29,11 @@ docker compose up -d
 timeout /t 4 /nobreak > nul
 
 echo [*] Opening browser interface...
+
+start http://localhost:5002
+start http://localhost:5004
+start http://localhost:5005
+start http://localhost:8502
 start http://localhost:8000
 
 echo ===================================================
