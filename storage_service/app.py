@@ -56,7 +56,7 @@ ENV_PATH = os.path.join(ROOT_DIR, ".env")
 
 load_dotenv(dotenv_path=ENV_PATH)
 
-STORAGE_PATH = os.getenv("DB_PATH", CONFIG.get("storage", {}).get("db_path", "/shared_data/database.db"))
+STORAGE_PATH = os.getenv("STORAGE_PATH", CONFIG.get("storage", {}).get("db_path", "/shared_data/database.db"))
 DB_PATH = os.getenv("DB_PATH", CONFIG.get("storage", {}).get("db_path", "/shared_data/storage.db"))
 PORT = int(os.getenv("PORT", CONFIG.get("service", {}).get("port", 5001)))
 DEBUG = os.getenv("FLASK_DEBUG", "True").lower() in ("true", "1")
